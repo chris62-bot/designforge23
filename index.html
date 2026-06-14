@@ -227,6 +227,10 @@ function designFromFilePrompt(){
 function designFromNotesPrompt(notes){
   return "A restaurant owner described the look they want:\n\n\"" + notes + "\"\n\nTurn this into a DESIGN.md — a complete design system specification with sections: ## Palette (named hex values), ## Typography (Google Fonts families, weights, scale), ## Layout, ## Components, ## Voice & mood. Make tasteful, specific choices that fit a restaurant. Output ONLY the markdown document, no preamble.";
 }
+function siteParsePrompt(url){
+  return "Search the web for the restaurant website at " + url + " and extract ALL available data.\n\nReturn ONLY valid JSON, no prose, no markdown, exactly this shape:\n{\"name\":\"\",\"concept\":\"\",\"tagline\":\"\",\"phone\":\"\",\"email\":\"\",\"description\":\"\",\"orderUrl\":\"\",\"deliveryUrl\":\"\",\"cateringContact\":\"\",\"locations\":[{\"label\":\"\",\"address\":\"\",\"city\":\"\",\"state\":\"\",\"zip\":\"\",\"phone\":\"\",\"hours\":{\"Mon\":{\"open\":true,\"from\":\"11:00\",\"to\":\"21:00\"},\"Tue\":{\"open\":true,\"from\":\"11:00\",\"to\":\"21:00\"},\"Wed\":{\"open\":true,\"from\":\"11:00\",\"to\":\"21:00\"},\"Thu\":{\"open\":true,\"from\":\"11:00\",\"to\":\"21:00\"},\"Fri\":{\"open\":true,\"from\":\"11:00\",\"to\":\"21:00\"},\"Sat\":{\"open\":false,\"from\":\"11:00\",\"to\":\"21:00\"},\"Sun\":{\"open\":false,\"from\":\"11:00\",\"to\":\"21:00\"}}}],\"categories\":[{\"name\":\"\",\"description\":\"\",\"items\":[{\"name\":\"\",\"price\":\"\",\"description\":\"\"}]}]}\n\nExtract every menu item you can find with name, price, and description. Get all locations with addresses and hours. Find ordering and delivery URLs. Use empty string for anything not found.";
+}
+
 function presenceParsePrompt(report){
   return "Below is a restaurant audit/visibility report (from Presence AI by Postforge). Extract the restaurant's basic data.\n\nReturn ONLY valid JSON, no prose, exactly this shape (use \"\" for anything not found):\n{\"name\":\"\",\"concept\":\"\",\"tagline\":\"\",\"phone\":\"\",\"email\":\"\",\"description\":\"\",\"locations\":[{\"label\":\"\",\"address\":\"\",\"city\":\"\",\"state\":\"\",\"zip\":\"\",\"phone\":\"\"}]}\n\nREPORT:\n" + report;
 }
@@ -379,6 +383,7 @@ function StepDesign({state, set}){
 function StepInfo({state, set}){
   const i = state.info;
   const [report, setReport] = useState("");
+  const [siteUrl, setSiteUrl] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState({kind:"", text:""});
   const upd = patch => set(s => ({...s, info:{...s.info, ...patch}}));
@@ -415,6 +420,67 @@ function StepInfo({state, set}){
     setBusy(false);
   }
 
+  async function importFromSite(){
+    if(!siteUrl.trim()){ setMsg({kind:"err", text:"Enter a website URL first."}); return; }
+    setBusy(true); setMsg({kind:"info", text:"Pulling data from site — this takes 20–30 seconds…"});
+    try{
+      const res = await callAPI({
+        messages:[{ role:"user", content: siteParsePrompt(siteUrl) }],
+        tools:[{type:"web_search_20250305", name:"web_search"}]
+      });
+      const raw = res.content.filter(b=>b.type==="text").map(b=>b.text).join("").trim();
+      const clean = raw.replace(/```json|```/g,"").trim();
+      const parsed = JSON.parse(clean);
+
+      set(s => {
+        let next = {...s};
+        // Info
+        if(parsed.name)        next = {...next, info:{...next.info, name:parsed.name}};
+        if(parsed.concept)     next = {...next, info:{...next.info, concept:parsed.concept}};
+        if(parsed.tagline)     next = {...next, info:{...next.info, tagline:parsed.tagline}};
+        if(parsed.phone)       next = {...next, info:{...next.info, phone:parsed.phone}};
+        if(parsed.email)       next = {...next, info:{...next.info, email:parsed.email}};
+        if(parsed.description) next = {...next, info:{...next.info, description:parsed.description}};
+        // Locations
+        if(parsed.locations && parsed.locations.length){
+          const imported = parsed.locations.map(L => ({
+            ...emptyLocation(),
+            label:L.label||"", address:L.address||"", city:L.city||"",
+            state:L.state||"", zip:L.zip||"", phone:L.phone||"",
+            hours: L.hours ? Object.fromEntries(Object.entries(L.hours).map(([d,h])=>[d,{open:!!h.open,from:h.from||"11:00",to:h.to||"21:00"}])) : emptyLocation().hours
+          }));
+          next = {...next, locations: imported};
+        }
+        // Menu
+        if(parsed.categories && parsed.categories.length){
+          const cats = parsed.categories.filter(c=>c.name).map(c=>({
+            id: Math.random().toString(36).slice(2),
+            name: c.name||"",
+            description: c.description||"",
+            items: (c.items||[]).filter(i=>i.name).map(i=>({
+              id: Math.random().toString(36).slice(2),
+              name:i.name||"", price:i.price||"", description:i.description||""
+            }))
+          }));
+          if(cats.length) next = {...next, categories: cats};
+        }
+        // Ordering
+        if(parsed.orderUrl || parsed.deliveryUrl || parsed.cateringContact){
+          next = {...next, ordering:{
+            ...next.ordering,
+            orderUrl: parsed.orderUrl||next.ordering.orderUrl||"",
+            deliveryUrl: parsed.deliveryUrl||next.ordering.deliveryUrl||"",
+            cateringContact: parsed.cateringContact||next.ordering.cateringContact||""
+          }};
+        }
+        return next;
+      });
+      setMsg({kind:"ok", text:"Done! Check each step — all data has been filled in. Edit anything that looks off."});
+    } catch(e){
+      setMsg({kind:"err", text:"Could not parse site data: "+e.message});
+    } finally { setBusy(false); }
+  }
+
   async function importPresence(){
     if(!report.trim()){ setMsg({kind:"err", text:"Paste the Presence report text first, or upload the report file above."}); return; }
     setBusy(true); setMsg({kind:"info", text:"Reading the report…"});
@@ -435,6 +501,15 @@ function StepInfo({state, set}){
     <div className="panel">
       <h2>Restaurant</h2>
       <p className="sub">The basics that anchor the whole site.</p>
+
+      <div className="import" style={{marginBottom:14}}>
+        <h3 style={{color:"var(--accent)"}}>Pull from existing website</h3>
+        <p className="sub" style={{marginBottom:8}}>Paste your restaurant URL — Designforge will extract the name, locations, hours, full menu, and ordering links automatically.</p>
+        <div style={{display:"flex",gap:8,marginBottom:8}}>
+          <input type="url" value={siteUrl} onChange={e=>setSiteUrl(e.target.value)} placeholder="https://whatsintheboxlunches.com" style={{flex:1}} />
+          <button className="btn" disabled={busy} onClick={importFromSite} style={{whiteSpace:"nowrap"}}>{busy?"Pulling…":"Pull from site"}</button>
+        </div>
+      </div>
 
       <div className="import">
         <h3>Import from a Presence report</h3>
@@ -740,4 +815,5 @@ function App(){
 ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 </body>
+</html>
 </html>
