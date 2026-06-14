@@ -435,6 +435,7 @@ function StepInfo({state, set}){
     try{
       const raw = await callClaude({
         max_tokens: 8000,
+        stream: false,
         messages:[{ role:"user", content: siteParsePrompt(siteUrl) }],
         tools:[{type:"web_search_20250305", name:"web_search"}]
       });
