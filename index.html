@@ -206,7 +206,16 @@ function stripFences(t){
 function extractJson(t){
   const a = t.indexOf("{"); const b = t.lastIndexOf("}");
   if(a === -1 || b === -1 || b <= a) throw new Error("Could not find JSON in the response.");
-  return JSON.parse(t.slice(a, b+1));
+  const slice = t.slice(a, b+1);
+  try { return JSON.parse(slice); } catch(e) {}
+  // Repair: remove trailing commas, strip literal newlines inside strings
+  const repaired = slice
+    .replace(/,\s*([\]}])/g, "$1")
+    .replace(/([^\\])\\n/g, "$1 ")
+    .replace(/\t/g, " ");
+  try { return JSON.parse(repaired); } catch(e) {
+    throw new Error("Could not parse site data (malformed JSON). Try a different URL or enter the data manually.");
+  }
 }
 function fileToBase64(file){
   return new Promise((resolve, reject) => {
