@@ -674,9 +674,9 @@ function StepMenu({state, set}){
       <p className="sub">Embedded right in the page — no PDF. Categories in the order you set here.</p>
       <div className="import" style={{marginBottom:14}}>
         <h3 style={{color:"var(--accent)"}}>Import menu from website</h3>
-        <p className="sub" style={{marginBottom:8}}>Paste the restaurant URL and Designforge will extract the full menu automatically.</p>
+        <p className="sub" style={{marginBottom:8}}>Paste the restaurant's menu page URL for best results (e.g. https://restaurant.com/menu).</p>
         <div style={{display:"flex",gap:8,marginBottom:8}}>
-          <input type="url" value={menuUrl} onChange={e=>setMenuUrl(e.target.value)} placeholder="https://restaurant.com" style={{flex:1}} />
+          <input type="url" value={menuUrl} onChange={e=>setMenuUrl(e.target.value)} placeholder="https://restaurant.com/menu" style={{flex:1}} />
           <button className="btn" disabled={busy||!menuUrl.trim()} onClick={e=>{e.preventDefault();e.stopPropagation();importMenu();}} style={{whiteSpace:"nowrap"}}>{busy?"Importing…":"Import menu"}</button>
         </div>
         {msg.text && <div className={"msg "+msg.kind}>{msg.text}</div>}
