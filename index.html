@@ -130,7 +130,7 @@ function emptyCategory(){ return { id:uid(), name:"", description:"", items:[emp
 function emptyItem(){ return { id:uid(), name:"", price:"", description:"" }; }
 
 const DEFAULT_STATE = {
-  design: { mode:"url", sourceUrl:"", brandNotes:"", designMd:"" },
+  design: { mode:"url", sourceUrl:"", brandNotes:"", designMd:"", logoDataUrl:"", logoName:"" },
   info: { name:"", concept:"", tagline:"", phone:"", email:"", description:"" },
   locations: [emptyLocation()],
   categories: [emptyCategory()],
@@ -255,7 +255,11 @@ function buildSitePrompt(state){
   else if(state.ordering.pos === "spoton") posNote = "Online ordering runs on SpotOn. Link order CTAs to the provided ordering URL (SpotOn URLs look like https://order.spoton.com/<slug>).";
   else posNote = "Link order CTAs to the provided ordering URL.";
 
+  const logoNote = state.design.logoDataUrl
+    ? "LOGO: embed this data URL as the <img src> for the restaurant logo in the header/nav: " + state.design.logoDataUrl + "\n\n"
+    : "";
   return "Build a COMPLETE single-file HTML website for this restaurant. Output ONLY the HTML document starting with <!DOCTYPE html>. No explanations, no markdown fences.\n\n" +
+  logoNote +
   "DESIGN SYSTEM (follow it faithfully — colors, fonts via Google Fonts links, mood):\n" + (state.design.designMd || "No design spec provided. Use a warm, appetizing palette and strong typography suited to the concept.") + "\n\n" +
   "RESTAURANT DATA (use ONLY this data, never invent menu items, addresses, or reviews):\n" + JSON.stringify(data, null, 1) + "\n\n" +
   "REQUIREMENTS (restaurant website best practices — all mandatory):\n" +
@@ -379,6 +383,31 @@ function StepDesign({state, set}){
 
       <Status kind="err">{err}</Status>
       <Status kind="info">{note}</Status>
+
+      <div style={{marginTop:18}}>
+        <h3>Logo (optional)</h3>
+        <p className="sub" style={{marginBottom:8}}>Upload the restaurant's logo — it will be embedded directly in the generated site.</p>
+        {d.logoDataUrl ? (
+          <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:8}}>
+            <img src={d.logoDataUrl} alt="Logo preview" style={{maxHeight:60,maxWidth:180,objectFit:"contain",background:"#f5f5f5",borderRadius:4,padding:4}} />
+            <span className="sub">{d.logoName}</span>
+            <button className="tiny danger" onClick={()=>upd({logoDataUrl:"",logoName:""})}>remove</button>
+          </div>
+        ) : (
+          <label className="filein">
+            <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml,image/gif"
+              onChange={e => {
+                const f = e.target.files && e.target.files[0];
+                if(!f) return;
+                const reader = new FileReader();
+                reader.onload = () => upd({logoDataUrl: reader.result, logoName: f.name});
+                reader.readAsDataURL(f);
+                e.target.value = "";
+              }} />
+            Tap to upload logo (PNG, JPG, SVG, WebP)
+          </label>
+        )}
+      </div>
 
       {d.designMd && (
         <div>
@@ -822,7 +851,7 @@ function App(){
   const [step, setStep] = useState(0);
 
   useEffect(() => {
-    try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){ /* storage full — generated HTML can exceed quota; keep going */ }
+    try{ const toSave = {...state, design:{...state.design, logoDataUrl:"", logoName:""}}; localStorage.setItem(STORE_KEY, JSON.stringify(toSave)); }catch(e){ /* storage full */ }
   }, [state]);
 
   function reset(){
