@@ -271,7 +271,7 @@ function buildSitePrompt(state){
   "10. Mobile-first responsive, semantic HTML, all CSS in one <style> block, minimal or no JS, fast and crawlable. Meta title + description filled in.\n";
 }
 function menuParsePrompt(url){
-  return "Search the web for the menu at " + url + ". You MUST return ONLY a raw JSON object — no prose, no markdown, no preamble. Start with { end with }. Exactly this shape:\n{\"categories\":[{\"name\":\"\",\"description\":\"\",\"items\":[{\"name\":\"\",\"price\":\"\",\"description\":\"\"}]}]}\n\nRules: include every category and item you find. Keep item descriptions under 12 words. Use \"\" for missing prices or descriptions. Return only the JSON object, nothing else.";
+  return "A restaurant's website is at " + url + ". Using your knowledge of this restaurant, return its menu. You MUST return ONLY a raw JSON object — no prose, no markdown, no preamble. Start with { end with }. Exactly this shape:\n{\"categories\":[{\"name\":\"\",\"description\":\"\",\"items\":[{\"name\":\"\",\"price\":\"\",\"description\":\"\"}]}]}\n\nRules: up to 8 categories, up to 15 items each. Item descriptions max 10 words. Use \"\" for unknown prices. If you do not have knowledge of this restaurant's menu, return {\"categories\":[]}. Return only the JSON object, nothing else.";
 }
 function revisePrompt(html, instruction){
   return "Here is a restaurant website (single-file HTML):\n\n" + html + "\n\nApply this change request from the owner:\n\"" + instruction + "\"\n\nOutput the COMPLETE revised HTML document starting with <!DOCTYPE html>. Keep everything else intact. No explanations, no markdown fences.";
@@ -635,8 +635,7 @@ function StepMenu({state, set}){
     try{
       const raw = await callClaude({
         max_tokens: 4000,
-        messages:[{ role:"user", content: menuParsePrompt(menuUrl) }],
-        tools:[{type:"web_search_20250305", name:"web_search"}]
+        messages:[{ role:"user", content: menuParsePrompt(menuUrl) }]
       });
       const parsed = extractJson(raw);
       if(!parsed.categories || !parsed.categories.length) throw new Error("No menu categories found for that URL.");
