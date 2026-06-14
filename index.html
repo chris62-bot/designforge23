@@ -425,6 +425,7 @@ function StepInfo({state, set}){
     setBusy(true); setMsg({kind:"info", text:"Pulling data from site — this takes 20–30 seconds…"});
     try{
       const raw = await callClaude({
+        max_tokens: 4000,
         messages:[{ role:"user", content: siteParsePrompt(siteUrl) }],
         tools:[{type:"web_search_20250305", name:"web_search"}]
       });
@@ -814,5 +815,4 @@ function App(){
 ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 </body>
-</html>
 </html>
