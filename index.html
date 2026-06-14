@@ -259,6 +259,7 @@ function buildSitePrompt(state){
   "DESIGN SYSTEM (follow it faithfully — colors, fonts via Google Fonts links, mood):\n" + (state.design.designMd || "No design spec provided. Use a warm, appetizing palette and strong typography suited to the concept.") + "\n\n" +
   "RESTAURANT DATA (use ONLY this data, never invent menu items, addresses, or reviews):\n" + JSON.stringify(data, null, 1) + "\n\n" +
   "REQUIREMENTS (restaurant website best practices — all mandatory):\n" +
+  "0. Navigation: all internal nav links MUST use anchor links only (e.g. href=\"#menu\", href=\"#locations\") — never absolute URLs or paths. The site is a single self-contained HTML file.\n" +
   "1. Above the fold: restaurant name, one-line hook, and a prominent ORDER ONLINE button" + (state.ordering.orderUrl ? " linking to " + state.ordering.orderUrl : "") + ". " + posNote + "\n" +
   "2. Menu embedded directly in the page (no PDF links): every category and item from the data, with prices and descriptions, in a scannable layout.\n" +
   "3. A thin banner near the top: ordering direct saves the restaurant third-party fees (phrase it warmly).\n" +
