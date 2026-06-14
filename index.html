@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Designforge — by Postforge</title>
+<meta name="description" content="Designforge by Postforge. Point it at a site you love, add your restaurant, get a complete website — built in minutes." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#0C0C0C; --panel:#141414; --panel2:#1A1A1A; --line:#262626;
+    --text:#EDEAE4; --muted:#9B968E; --accent:#E05C2E; --accent-dim:#7A3219;
+    --good:#6FBF73; --bad:#D9534F;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{background:var(--bg); color:var(--text); font-family:'Space Grotesk',sans-serif; font-size:16px; -webkit-font-smoothing:antialiased;}
+  #root{min-height:100vh;}
+  .wrap{max-width:880px; margin:0 auto; padding:24px 16px 96px;}
+  header.app{display:flex; align-items:baseline; gap:12px; padding:8px 0 20px; border-bottom:1px solid var(--line); margin-bottom:20px;}
+  header.app h1{font-size:22px; font-weight:700; letter-spacing:-0.02em;}
+  header.app h1 .forge{color:var(--accent);}
+  header.app .by{font-family:'Space Mono',monospace; font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.12em;}
+  header.app .reset{margin-left:auto; font-family:'Space Mono',monospace; font-size:11px; color:var(--muted); background:none; border:1px solid var(--line); border-radius:6px; padding:6px 10px; cursor:pointer;}
+  header.app .reset:hover{color:var(--text); border-color:var(--muted);}
+
+  /* Step rail */
+  .rail{display:flex; gap:0; margin-bottom:24px; overflow-x:auto; border:1px solid var(--line); border-radius:10px; background:var(--panel);}
+  .rail .st{flex:1; min-width:96px; padding:10px 8px 12px; text-align:center; cursor:pointer; border-right:1px solid var(--line); position:relative; background:none; border-top:none; border-bottom:none; border-left:none; color:var(--muted);}
+  .rail .st:last-child{border-right:none;}
+  .rail .st .num{font-family:'Space Mono',monospace; font-size:10px; letter-spacing:0.14em; display:block; margin-bottom:3px;}
+  .rail .st .lbl{font-size:12.5px; font-weight:500;}
+  .rail .st.active{color:var(--text);}
+  .rail .st.active::after{content:''; position:absolute; left:0; right:0; bottom:0; height:2px; background:var(--accent);}
+  .rail .st.done .num{color:var(--accent);}
+
+  .panel{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:20px; margin-bottom:16px;}
+  .panel h2{font-size:18px; font-weight:700; margin-bottom:4px; letter-spacing:-0.01em;}
+  .panel p.sub{color:var(--muted); font-size:13.5px; margin-bottom:16px; line-height:1.45;}
+  .panel h3{font-family:'Space Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:0.12em; color:var(--muted); margin:18px 0 8px;}
+
+  label.f{display:block; margin-bottom:12px;}
+  label.f span{display:block; font-family:'Space Mono',monospace; font-size:10.5px; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); margin-bottom:5px;}
+  input[type=text], input[type=time], input[type=url], input[type=email], input[type=tel], textarea, select{
+    width:100%; background:var(--panel2); border:1px solid var(--line); border-radius:8px; color:var(--text);
+    padding:10px 12px; font-family:'Space Grotesk',sans-serif; font-size:15px; outline:none;
+  }
+  textarea{resize:vertical; line-height:1.5;}
+  textarea.mono{font-family:'Space Mono',monospace; font-size:12.5px;}
+  input:focus, textarea:focus, select:focus{border-color:var(--accent); box-shadow:0 0 0 2px rgba(224,92,46,0.18);}
+  .row{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .row3{display:grid; grid-template-columns:2fr 1fr 1fr; gap:12px;}
+  @media(max-width:560px){.row,.row3{grid-template-columns:1fr;}}
+
+  button.btn{background:var(--accent); color:#0C0C0C; border:none; border-radius:8px; padding:11px 18px; font-family:'Space Grotesk',sans-serif; font-size:15px; font-weight:700; cursor:pointer;}
+  button.btn:hover{filter:brightness(1.08);}
+  button.btn:disabled{opacity:0.45; cursor:default; filter:none;}
+  button.ghost{background:none; border:1px solid var(--line); color:var(--text); border-radius:8px; padding:10px 16px; font-size:14px; font-weight:500; cursor:pointer; font-family:'Space Grotesk',sans-serif;}
+  button.ghost:hover{border-color:var(--muted);}
+  button.tiny{background:none; border:1px solid var(--line); color:var(--muted); border-radius:6px; padding:4px 9px; font-size:12px; cursor:pointer; font-family:'Space Mono',monospace;}
+  button.tiny:hover{color:var(--text); border-color:var(--muted);}
+  button.tiny.danger:hover{color:var(--bad); border-color:var(--bad);}
+
+  .nav{display:flex; justify-content:space-between; gap:12px; margin-top:8px;}
+  .status{font-family:'Space Mono',monospace; font-size:12px; padding:10px 12px; border-radius:8px; margin:12px 0; line-height:1.5; word-break:break-word;}
+  .status.info{background:rgba(224,92,46,0.08); border:1px solid rgba(224,92,46,0.35); color:var(--accent);}
+  .status.err{background:rgba(217,83,79,0.08); border:1px solid rgba(217,83,79,0.4); color:var(--bad);}
+  .status.ok{background:rgba(111,191,115,0.08); border:1px solid rgba(111,191,115,0.35); color:var(--good);}
+
+  .card{background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:14px; margin-bottom:12px;}
+  .card .cardhead{display:flex; align-items:center; gap:8px; margin-bottom:10px;}
+  .card .cardhead .grow{flex:1;}
+  .hoursgrid{display:grid; grid-template-columns:64px 1fr 1fr 70px; gap:6px 8px; align-items:center; margin-top:8px;}
+  .hoursgrid .d{font-family:'Space Mono',monospace; font-size:11.5px; color:var(--muted);}
+  .hoursgrid input[type=time]{padding:6px 8px; font-size:13px;}
+  .closedtog{display:flex; align-items:center; gap:5px; font-size:12px; color:var(--muted); cursor:pointer; user-select:none;}
+
+  .item{display:grid; grid-template-columns:1fr 86px auto; gap:8px; margin-bottom:8px; align-items:start;}
+  .item .desc{grid-column:1 / -1;}
+  .itembtns{display:flex; gap:4px;}
+
+  .specbox{background:#0F0F0F; border:1px solid var(--line); border-radius:8px; max-height:280px; overflow:auto; padding:12px; font-family:'Space Mono',monospace; font-size:12px; line-height:1.55; white-space:pre-wrap; color:#C9C4BC;}
+
+  .previewbar{display:flex; flex-wrap:wrap; gap:8px; margin:12px 0;}
+  iframe.preview{width:100%; height:540px; border:1px solid var(--line); border-radius:10px; background:#fff;}
+  .charcount{font-family:'Space Mono',monospace; font-size:11px; color:var(--muted);}
+
+  .import{border:1px dashed var(--accent-dim); border-color:rgba(224,92,46,0.4); border-radius:10px; padding:14px; margin-bottom:18px; background:rgba(224,92,46,0.04);}
+  .import h3{margin-top:0; color:var(--accent);}
+
+  .choice{display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;}
+  .choice button{flex:1; min-width:120px; background:var(--panel2); border:1px solid var(--line); color:var(--muted); border-radius:8px; padding:10px; font-size:13.5px; cursor:pointer; font-family:'Space Grotesk',sans-serif;}
+  .choice button.on{border-color:var(--accent); color:var(--text);}
+
+  .filein{display:block; border:1px dashed var(--line); border-radius:8px; padding:18px; text-align:center; color:var(--muted); font-size:13.5px; cursor:pointer;}
+  .filein:hover{border-color:var(--muted);}
+  .filein input{display:none;}
+
+  footer.app{margin-top:32px; text-align:center; font-family:'Space Mono',monospace; font-size:10.5px; color:#5C5852; letter-spacing:0.08em;}
+  @media (prefers-reduced-motion: reduce){ *{transition:none !important; animation:none !important;} }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef } = React;
+
+/* ---------------- constants & state ---------------- */
+const DAYS = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+const STEPS = ["Design","Restaurant","Locations","Menu","Ordering","Generate"];
+const STORE_KEY = "designforge_v2";
+const MODEL = "claude-sonnet-4-6";
+
+function uid(){ return Math.random().toString(36).slice(2,9); }
+function defaultHours(){
+  const h = {};
+  DAYS.forEach(d => h[d] = { open:"10:30", close:"21:00", closed:false });
+  return h;
+}
+function emptyLocation(){
+  return { id:uid(), label:"", address:"", city:"", state:"", zip:"", phone:"", hours:defaultHours() };
+}
+function emptyCategory(){ return { id:uid(), name:"", description:"", items:[emptyItem()] }; }
+function emptyItem(){ return { id:uid(), name:"", price:"", description:"" }; }
+
+const DEFAULT_STATE = {
+  design: { mode:"url", sourceUrl:"", brandNotes:"", designMd:"" },
+  info: { name:"", concept:"", tagline:"", phone:"", email:"", description:"" },
+  locations: [emptyLocation()],
+  categories: [emptyCategory()],
+  ordering: { pos:"toast", orderUrl:"", deliveryUrl:"", cateringEmail:"" },
+  generatedHtml: ""
+};
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(!raw) return DEFAULT_STATE;
+    const parsed = JSON.parse(raw);
+    return { ...DEFAULT_STATE, ...parsed,
+      design:{...DEFAULT_STATE.design, ...(parsed.design||{})},
+      info:{...DEFAULT_STATE.info, ...(parsed.info||{})},
+      ordering:{...DEFAULT_STATE.ordering, ...(parsed.ordering||{})},
+      locations:(parsed.locations&&parsed.locations.length)?parsed.locations:[emptyLocation()],
+      categories:(parsed.categories&&parsed.categories.length)?parsed.categories:[emptyCategory()]
+    };
+  }catch(e){ return DEFAULT_STATE; }
+}
+
+/* ---------------- API helper (streaming) ---------------- */
+async function callClaude(payload, onDelta){
+  const res = await fetch("/api/claude", {
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ model: MODEL, stream:true, ...payload })
+  });
+  const ct = (res.headers.get("content-type")||"");
+  if(!ct.includes("text/event-stream")){
+    let data = null;
+    try{ data = await res.json(); }catch(e){ throw new Error("Unexpected response ("+res.status+") from the API proxy. Check the function logs in Netlify."); }
+    if(data && data.error){ throw new Error(typeof data.error==="string" ? data.error : (data.error.message||"API error")); }
+    if(data && data.content){ return data.content.filter(b=>b.type==="text").map(b=>b.text).join("\n"); }
+    throw new Error("Empty response from the API proxy.");
+  }
+  const reader = res.body.getReader();
+  const dec = new TextDecoder();
+  let buf = "", text = "";
+  while(true){
+    const {done, value} = await reader.read();
+    if(done) break;
+    buf += dec.decode(value, {stream:true});
+    const lines = buf.split("\n");
+    buf = lines.pop();
+    for(const line of lines){
+      if(!line.startsWith("data:")) continue;
+      const dataStr = line.slice(5).trim();
+      if(!dataStr) continue;
+      let ev = null;
+      try{ ev = JSON.parse(dataStr); }catch(e){ continue; }
+      if(ev.type === "content_block_delta" && ev.delta && ev.delta.type === "text_delta"){
+        text += ev.delta.text;
+        if(onDelta) onDelta(text);
+      }
+      if(ev.type === "error"){ throw new Error((ev.error && ev.error.message) || "Stream error"); }
+    }
+  }
+  if(!text.trim()) throw new Error("The model returned an empty response. Try again.");
+  return text;
+}
+
+function stripFences(t){
+  let s = t.trim();
+  s = s.replace(/^```(?:html|json|markdown|md)?\s*\n?/i, "");
+  s = s.replace(/\n?```\s*$/i, "");
+  // If the model added prose before the doctype, cut to the document
+  const dt = s.search(/<!DOCTYPE/i);
+  if(dt > 0) s = s.slice(dt);
+  return s.trim();
+}
+function extractJson(t){
+  const a = t.indexOf("{"); const b = t.lastIndexOf("}");
+  if(a === -1 || b === -1 || b <= a) throw new Error("Could not find JSON in the response.");
+  return JSON.parse(t.slice(a, b+1));
+}
+function fileToBase64(file){
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(String(r.result).split(",")[1]);
+    r.onerror = () => reject(new Error("Could not read the file."));
+    r.readAsDataURL(file);
+  });
+}
+
+/* ---------------- prompts ---------------- */
+function designFromUrlPrompt(url){
+  return "Research the website at " + url + " using web search. Then write a DESIGN.md — a complete design system specification capturing that site's visual identity, so another AI can build a new site in the same style.\n\nInclude these sections in markdown:\n# DESIGN.md\n## Palette — 4–8 named hex values (background, surface, text, accent, etc.) as observed or closely inferred\n## Typography — display and body font families (or close Google Fonts equivalents), weights, approximate scale\n## Layout — grid feel, section rhythm, spacing density, container width\n## Components — button style, card style, border radius, shadows, imagery treatment\n## Voice & mood — 2–3 sentences on the overall feel\n\nIf you cannot access the exact site, say so in one line at the top, then produce your best spec from knowledge of the brand. Output ONLY the markdown document, no preamble.";
+}
+function designFromFilePrompt(){
+  return "This is a brand guide (or brand reference) for a restaurant. Extract a DESIGN.md — a complete design system specification — with sections: ## Palette (named hex values), ## Typography (families with Google Fonts equivalents, weights, scale), ## Layout, ## Components, ## Voice & mood. Output ONLY the markdown document, no preamble.";
+}
+function designFromNotesPrompt(notes){
+  return "A restaurant owner described the look they want:\n\n\"" + notes + "\"\n\nTurn this into a DESIGN.md — a complete design system specification with sections: ## Palette (named hex values), ## Typography (Google Fonts families, weights, scale), ## Layout, ## Components, ## Voice & mood. Make tasteful, specific choices that fit a restaurant. Output ONLY the markdown document, no preamble.";
+}
+function presenceParsePrompt(report){
+  return "Below is a restaurant audit/visibility report (from Presence AI by Postforge). Extract the restaurant's basic data.\n\nReturn ONLY valid JSON, no prose, exactly this shape (use \"\" for anything not found):\n{\"name\":\"\",\"concept\":\"\",\"tagline\":\"\",\"phone\":\"\",\"email\":\"\",\"description\":\"\",\"locations\":[{\"label\":\"\",\"address\":\"\",\"city\":\"\",\"state\":\"\",\"zip\":\"\",\"phone\":\"\"}]}\n\nREPORT:\n" + report;
+}
+function buildSitePrompt(state){
+  const data = {
+    restaurant: state.info,
+    locations: state.locations.map(l => ({ label:l.label, address:l.address, city:l.city, state:l.state, zip:l.zip, phone:l.phone, hours:l.hours })),
+    menu: state.categories.map(c => ({ category:c.name, description:c.description, items:c.items.filter(i=>i.name).map(i=>({name:i.name, price:i.price, description:i.description})) })),
+    ordering: state.ordering
+  };
+  let posNote = "";
+  if(state.ordering.pos === "toast") posNote = "Online ordering runs on Toast. Link order CTAs to the provided ordering URL (Toast URLs look like https://order.toasttab.com/online/<slug>).";
+  else if(state.ordering.pos === "spoton") posNote = "Online ordering runs on SpotOn. Link order CTAs to the provided ordering URL (SpotOn URLs look like https://order.spoton.com/<slug>).";
+  else posNote = "Link order CTAs to the provided ordering URL.";
+
+  return "Build a COMPLETE single-file HTML website for this restaurant. Output ONLY the HTML document starting with <!DOCTYPE html>. No explanations, no markdown fences.\n\n" +
+  "DESIGN SYSTEM (follow it faithfully — colors, fonts via Google Fonts links, mood):\n" + (state.design.designMd || "No design spec provided. Use a warm, appetizing palette and strong typography suited to the concept.") + "\n\n" +
+  "RESTAURANT DATA (use ONLY this data, never invent menu items, addresses, or reviews):\n" + JSON.stringify(data, null, 1) + "\n\n" +
+  "REQUIREMENTS (restaurant website best practices — all mandatory):\n" +
+  "1. Above the fold: restaurant name, one-line hook, and a prominent ORDER ONLINE button" + (state.ordering.orderUrl ? " linking to " + state.ordering.orderUrl : "") + ". " + posNote + "\n" +
+  "2. Menu embedded directly in the page (no PDF links): every category and item from the data, with prices and descriptions, in a scannable layout.\n" +
+  "3. A thin banner near the top: ordering direct saves the restaurant third-party fees (phrase it warmly).\n" +
+  "4. Locations & hours section: every location with full address, phone (clickable tel: link), and the day-by-day hours provided. Mark closed days clearly.\n" +
+  "5. A 'Fan favorites' strip highlighting 3 menu items (pick the first item of the first 3 categories that have items).\n" +
+  "6. Image placeholders: use https://placehold.co/ images with descriptive alt text (e.g. hero dish, interior) — never hotlink real photos.\n" +
+  "7. If a delivery URL is provided, a secondary 'Delivery' link. If a catering email is provided, a catering CTA (mailto:).\n" +
+  "8. Footer: NAP (name, address, phone) for every location, hours summary, and the line 'Site by Postforge'.\n" +
+  "9. schema.org JSON-LD: a Restaurant block per location with name, address, telephone, openingHoursSpecification, servesCuisine.\n" +
+  "10. Mobile-first responsive, semantic HTML, all CSS in one <style> block, minimal or no JS, fast and crawlable. Meta title + description filled in.\n";
+}
+function revisePrompt(html, instruction){
+  return "Here is a restaurant website (single-file HTML):\n\n" + html + "\n\nApply this change request from the owner:\n\"" + instruction + "\"\n\nOutput the COMPLETE revised HTML document starting with <!DOCTYPE html>. Keep everything else intact. No explanations, no markdown fences.";
+}
+
+/* ---------------- small components ---------------- */
+function Field({label, value, onChange, type, placeholder}){
+  return (
+    <label className="f">
+      <span>{label}</span>
+      <input type={type||"text"} value={value} placeholder={placeholder||""} onChange={e=>onChange(e.target.value)} />
+    </label>
+  );
+}
+function Status({kind, children}){
+  if(!children) return null;
+  return <div className={"status "+kind}>{children}</div>;
+}
+
+/* ---------------- Step 1: Design ---------------- */
+function StepDesign({state, set}){
+  const d = state.design;
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const [note, setNote] = useState("");
+  const upd = patch => set(s => ({...s, design:{...s.design, ...patch}}));
+
+  async function extractFromUrl(){
+    if(!d.sourceUrl.trim()){ setErr("Enter a website URL first."); return; }
+    setBusy(true); setErr(""); setNote("Reading the site and writing the design spec…");
+    try{
+      const text = await callClaude({
+        max_tokens: 4000,
+        tools: [{ type:"web_search_20250305", name:"web_search" }],
+        messages: [{ role:"user", content: designFromUrlPrompt(d.sourceUrl.trim()) }]
+      }, t => setNote("Writing design spec… " + t.length + " chars"));
+      upd({ designMd: stripFences(text) });
+      setNote("Design spec ready. Review and edit it below if needed.");
+    }catch(e){ setErr(e.message); setNote(""); }
+    setBusy(false);
+  }
+  async function extractFromFile(file){
+    setBusy(true); setErr(""); setNote("Reading " + file.name + "…");
+    try{
+      const b64 = await fileToBase64(file);
+      const isPdf = file.type === "application/pdf";
+      const block = isPdf
+        ? { type:"document", source:{ type:"base64", media_type:"application/pdf", data:b64 } }
+        : { type:"image", source:{ type:"base64", media_type:(file.type||"image/png"), data:b64 } };
+      const text = await callClaude({
+        max_tokens: 4000,
+        messages: [{ role:"user", content: [ block, { type:"text", text: designFromFilePrompt() } ] }]
+      }, t => setNote("Writing design spec… " + t.length + " chars"));
+      upd({ designMd: stripFences(text) });
+      setNote("Design spec ready. Review and edit it below if needed.");
+    }catch(e){ setErr(e.message); setNote(""); }
+    setBusy(false);
+  }
+  async function extractFromNotes(){
+    if(!d.brandNotes.trim()){ setErr("Describe the look you want first."); return; }
+    setBusy(true); setErr(""); setNote("Turning your description into a design spec…");
+    try{
+      const text = await callClaude({
+        max_tokens: 4000,
+        messages: [{ role:"user", content: designFromNotesPrompt(d.brandNotes.trim()) }]
+      }, t => setNote("Writing design spec… " + t.length + " chars"));
+      upd({ designMd: stripFences(text) });
+      setNote("Design spec ready. Review and edit it below if needed.");
+    }catch(e){ setErr(e.message); setNote(""); }
+    setBusy(false);
+  }
+
+  return (
+    <div className="panel">
+      <h2>Design source</h2>
+      <p className="sub">Point Designforge at a site whose look you love, upload a brand guide, or describe the style. It writes a DESIGN.md spec that drives the whole build.</p>
+      <div className="choice">
+        <button className={d.mode==="url"?"on":""} onClick={()=>upd({mode:"url"})}>From a website</button>
+        <button className={d.mode==="file"?"on":""} onClick={()=>upd({mode:"file"})}>Brand guide upload</button>
+        <button className={d.mode==="notes"?"on":""} onClick={()=>upd({mode:"notes"})}>Describe it</button>
+      </div>
+
+      {d.mode==="url" && (
+        <div>
+          <Field label="Website URL" value={d.sourceUrl} onChange={v=>upd({sourceUrl:v})} type="url" placeholder="https://example-restaurant.com" />
+          <button className="btn" disabled={busy} onClick={extractFromUrl}>{busy?"Working…":"Extract design"}</button>
+        </div>
+      )}
+      {d.mode==="file" && (
+        <label className="filein">
+          <input type="file" accept="application/pdf,image/png,image/jpeg,image/webp" disabled={busy}
+            onChange={e => { const f = e.target.files && e.target.files[0]; if(f) extractFromFile(f); e.target.value=""; }} />
+          {busy ? "Working…" : "Tap to upload a brand guide (PDF or image)"}
+        </label>
+      )}
+      {d.mode==="notes" && (
+        <div>
+          <label className="f"><span>Describe the look</span>
+            <textarea rows="4" value={d.brandNotes} placeholder="Warm and rustic, cream and forest green, big serif headlines, feels like a neighborhood spot…" onChange={e=>upd({brandNotes:e.target.value})} />
+          </label>
+          <button className="btn" disabled={busy} onClick={extractFromNotes}>{busy?"Working…":"Write design spec"}</button>
+        </div>
+      )}
+
+      <Status kind="err">{err}</Status>
+      <Status kind="info">{note}</Status>
+
+      {d.designMd && (
+        <div>
+          <h3>DESIGN.md (editable)</h3>
+          <label className="f">
+            <textarea className="mono" rows="12" value={d.designMd} onChange={e=>upd({designMd:e.target.value})} />
+          </label>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ---------------- Step 2: Restaurant info + Presence intake ---------------- */
+function StepInfo({state, set}){
+  const i = state.info;
+  const [report, setReport] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState({kind:"", text:""});
+  const upd = patch => set(s => ({...s, info:{...s.info, ...patch}}));
+
+  function applyParsed(parsed){
+    set(s => {
+      const info = {...s.info};
+      ["name","concept","tagline","phone","email","description"].forEach(k => { if(parsed[k]) info[k] = parsed[k]; });
+      let locations = s.locations;
+      if(parsed.locations && parsed.locations.length){
+        const imported = parsed.locations.map(L => ({ ...emptyLocation(), label:L.label||"", address:L.address||"", city:L.city||"", state:L.state||"", zip:L.zip||"", phone:L.phone||"" }));
+        const existingHasData = s.locations.some(l => l.address || l.city);
+        locations = existingHasData ? s.locations.concat(imported) : imported;
+      }
+      return {...s, info, locations};
+    });
+  }
+
+  async function importPresenceFile(file){
+    setBusy(true); setMsg({kind:"info", text:"Reading " + file.name + "…"});
+    try{
+      const b64 = await fileToBase64(file);
+      const isPdf = file.type === "application/pdf";
+      const block = isPdf
+        ? { type:"document", source:{ type:"base64", media_type:"application/pdf", data:b64 } }
+        : { type:"image", source:{ type:"base64", media_type:(file.type||"image/png"), data:b64 } };
+      const text = await callClaude({
+        max_tokens: 2500,
+        messages: [{ role:"user", content: [ block, { type:"text", text: presenceParsePrompt("(see attached report)") } ] }]
+      });
+      applyParsed(extractJson(text));
+      setMsg({kind:"ok", text:"Imported from " + file.name + ". Check the fields below and the Locations step."});
+    }catch(e){ setMsg({kind:"err", text:e.message}); }
+    setBusy(false);
+  }
+
+  async function importPresence(){
+    if(!report.trim()){ setMsg({kind:"err", text:"Paste the Presence report text first, or upload the report file above."}); return; }
+    setBusy(true); setMsg({kind:"info", text:"Reading the report…"});
+    try{
+      const text = await callClaude({
+        max_tokens: 2500,
+        messages: [{ role:"user", content: presenceParsePrompt(report) }]
+      });
+      const parsed = extractJson(text);
+      applyParsed(parsed);
+      setMsg({kind:"ok", text:"Imported. Check the fields below and the Locations step."});
+      setReport("");
+    }catch(e){ setMsg({kind:"err", text:e.message}); }
+    setBusy(false);
+  }
+
+  return (
+    <div className="panel">
+      <h2>Restaurant</h2>
+      <p className="sub">The basics that anchor the whole site.</p>
+
+      <div className="import">
+        <h3>Import from a Presence report</h3>
+        <p className="sub" style={{marginBottom:8}}>Upload the report (PDF or screenshot) and Designforge pre-fills the wizard.</p>
+        <label className="filein" style={{marginBottom:10}}>
+          <input type="file" accept="application/pdf,image/png,image/jpeg,image/webp" disabled={busy}
+            onChange={e => { const f = e.target.files && e.target.files[0]; if(f) importPresenceFile(f); e.target.value=""; }} />
+          {busy ? "Working…" : "Tap to upload the Presence report"}
+        </label>
+        <p className="sub" style={{marginBottom:6}}>Or paste the report text:</p>
+        <label className="f">
+          <textarea rows="3" value={report} placeholder="Paste Presence AI report text here…" onChange={e=>setReport(e.target.value)} />
+        </label>
+        <button className="ghost" disabled={busy} onClick={importPresence}>{busy?"Importing…":"Import pasted text"}</button>
+        <Status kind={msg.kind}>{msg.text}</Status>
+      </div>
+
+      <div className="row">
+        <Field label="Restaurant name" value={i.name} onChange={v=>upd({name:v})} placeholder="What's In The Box Lunches" />
+        <Field label="Concept / cuisine" value={i.concept} onChange={v=>upd({concept:v})} placeholder="Box lunches & catering" />
+      </div>
+      <Field label="Tagline" value={i.tagline} onChange={v=>upd({tagline:v})} placeholder="Lunch, handled." />
+      <div className="row">
+        <Field label="Phone" value={i.phone} onChange={v=>upd({phone:v})} type="tel" placeholder="(314) 555-0142" />
+        <Field label="Email" value={i.email} onChange={v=>upd({email:v})} type="email" placeholder="hello@restaurant.com" />
+      </div>
+      <label className="f"><span>Short description (about section)</span>
+        <textarea rows="3" value={i.description} onChange={e=>upd({description:e.target.value})} placeholder="A couple of sentences about the place, the food, the story." />
+      </label>
+    </div>
+  );
+}
+
+/* ---------------- Step 3: Locations ---------------- */
+function StepLocations({state, set}){
+  const updLoc = (id, patch) => set(s => ({...s, locations: s.locations.map(l => l.id===id ? {...l, ...patch} : l)}));
+  const updHours = (id, day, patch) => set(s => ({...s, locations: s.locations.map(l => l.id===id ? {...l, hours:{...l.hours, [day]:{...l.hours[day], ...patch}}} : l)}));
+  const addLoc = () => set(s => ({...s, locations: s.locations.concat([emptyLocation()])}));
+  const delLoc = id => set(s => ({...s, locations: s.locations.length>1 ? s.locations.filter(l=>l.id!==id) : s.locations}));
+  const copyHoursToAll = id => set(s => {
+    const src = s.locations.find(l=>l.id===id); if(!src) return s;
+    return {...s, locations: s.locations.map(l => ({...l, hours: JSON.parse(JSON.stringify(src.hours))}))};
+  });
+
+  return (
+    <div className="panel">
+      <h2>Locations & hours</h2>
+      <p className="sub">Every location goes on the site with its own address, phone, and day-by-day hours — and into the local-SEO markup.</p>
+      {state.locations.map((l, idx) => (
+        <div className="card" key={l.id}>
+          <div className="cardhead">
+            <div className="grow"><input type="text" value={l.label} placeholder={"Location name (e.g. Maryland Heights)"} onChange={e=>updLoc(l.id,{label:e.target.value})} /></div>
+            {state.locations.length>1 && <button className="tiny danger" onClick={()=>delLoc(l.id)}>remove</button>}
+          </div>
+          <Field label="Street address" value={l.address} onChange={v=>updLoc(l.id,{address:v})} placeholder="2310 Westport Plaza Dr" />
+          <div className="row3">
+            <Field label="City" value={l.city} onChange={v=>updLoc(l.id,{city:v})} />
+            <Field label="State" value={l.state} onChange={v=>updLoc(l.id,{state:v})} />
+            <Field label="ZIP" value={l.zip} onChange={v=>updLoc(l.id,{zip:v})} />
+          </div>
+          <Field label="Location phone" value={l.phone} onChange={v=>updLoc(l.id,{phone:v})} type="tel" />
+          <h3>Hours</h3>
+          <div className="hoursgrid">
+            {DAYS.map(day => (
+              <React.Fragment key={day}>
+                <div className="d">{day}</div>
+                <input type="time" value={l.hours[day].open} disabled={l.hours[day].closed} onChange={e=>updHours(l.id,day,{open:e.target.value})} />
+                <input type="time" value={l.hours[day].close} disabled={l.hours[day].closed} onChange={e=>updHours(l.id,day,{close:e.target.value})} />
+                <label className="closedtog">
+                  <input type="checkbox" checked={l.hours[day].closed} onChange={e=>updHours(l.id,day,{closed:e.target.checked})} /> closed
+                </label>
+              </React.Fragment>
+            ))}
+          </div>
+          {state.locations.length>1 && <div style={{marginTop:10}}><button className="tiny" onClick={()=>copyHoursToAll(l.id)}>copy these hours to all locations</button></div>}
+        </div>
+      ))}
+      <button className="ghost" onClick={addLoc}>+ Add location</button>
+    </div>
+  );
+}
+
+/* ---------------- Step 4: Menu ---------------- */
+function StepMenu({state, set}){
+  const updCat = (id, patch) => set(s => ({...s, categories: s.categories.map(c => c.id===id ? {...c, ...patch} : c)}));
+  const addCat = () => set(s => ({...s, categories: s.categories.concat([emptyCategory()])}));
+  const delCat = id => set(s => ({...s, categories: s.categories.length>1 ? s.categories.filter(c=>c.id!==id) : s.categories}));
+  const moveCat = (id, dir) => set(s => {
+    const arr = s.categories.slice(); const i = arr.findIndex(c=>c.id===id); const j = i+dir;
+    if(j<0 || j>=arr.length) return s;
+    const t = arr[i]; arr[i]=arr[j]; arr[j]=t;
+    return {...s, categories:arr};
+  });
+  const updItem = (cid, iid, patch) => set(s => ({...s, categories: s.categories.map(c => c.id!==cid ? c : {...c, items:c.items.map(it => it.id===iid ? {...it, ...patch} : it)})}));
+  const addItem = cid => set(s => ({...s, categories: s.categories.map(c => c.id!==cid ? c : {...c, items:c.items.concat([emptyItem()])})}));
+  const delItem = (cid, iid) => set(s => ({...s, categories: s.categories.map(c => c.id!==cid ? c : {...c, items: c.items.length>1 ? c.items.filter(it=>it.id!==iid) : c.items})}));
+  const moveItem = (cid, iid, dir) => set(s => ({...s, categories: s.categories.map(c => {
+    if(c.id!==cid) return c;
+    const arr = c.items.slice(); const i = arr.findIndex(it=>it.id===iid); const j = i+dir;
+    if(j<0 || j>=arr.length) return c;
+    const t = arr[i]; arr[i]=arr[j]; arr[j]=t;
+    return {...c, items:arr};
+  })}));
+
+  return (
+    <div className="panel">
+      <h2>Menu</h2>
+      <p className="sub">Embedded right in the page — no PDF. Categories in the order you set here.</p>
+      {state.categories.map((c, ci) => (
+        <div className="card" key={c.id}>
+          <div className="cardhead">
+            <div className="grow"><input type="text" value={c.name} placeholder="Category (e.g. Sandwiches)" onChange={e=>updCat(c.id,{name:e.target.value})} /></div>
+            <button className="tiny" onClick={()=>moveCat(c.id,-1)}>↑</button>
+            <button className="tiny" onClick={()=>moveCat(c.id,1)}>↓</button>
+            {state.categories.length>1 && <button className="tiny danger" onClick={()=>delCat(c.id)}>remove</button>}
+          </div>
+          <label className="f"><span>Category description (optional)</span>
+            <input type="text" value={c.description} placeholder="All sandwiches come with chips and a pickle." onChange={e=>updCat(c.id,{description:e.target.value})} />
+          </label>
+          <h3>Items</h3>
+          {c.items.map(it => (
+            <div className="item" key={it.id}>
+              <input type="text" value={it.name} placeholder="Item name" onChange={e=>updItem(c.id,it.id,{name:e.target.value})} />
+              <input type="text" value={it.price} placeholder="$12.50" onChange={e=>updItem(c.id,it.id,{price:e.target.value})} />
+              <div className="itembtns">
+                <button className="tiny" onClick={()=>moveItem(c.id,it.id,-1)}>↑</button>
+                <button className="tiny" onClick={()=>moveItem(c.id,it.id,1)}>↓</button>
+                <button className="tiny danger" onClick={()=>delItem(c.id,it.id)}>×</button>
+              </div>
+              <div className="desc"><input type="text" value={it.description} placeholder="Short description" onChange={e=>updItem(c.id,it.id,{description:e.target.value})} /></div>
+            </div>
+          ))}
+          <button className="tiny" onClick={()=>addItem(c.id)}>+ add item</button>
+        </div>
+      ))}
+      <button className="ghost" onClick={addCat}>+ Add category</button>
+    </div>
+  );
+}
+
+/* ---------------- Step 5: Ordering ---------------- */
+function StepOrdering({state, set}){
+  const o = state.ordering;
+  const upd = patch => set(s => ({...s, ordering:{...s.ordering, ...patch}}));
+  const hint = o.pos==="toast" ? "Toast ordering URLs look like https://order.toasttab.com/online/your-slug"
+    : o.pos==="spoton" ? "SpotOn ordering URLs look like https://order.spoton.com/your-slug"
+    : "Paste the full URL customers use to order online.";
+  return (
+    <div className="panel">
+      <h2>Ordering & POS</h2>
+      <p className="sub">Order-direct is the #1 call to action on the site. Wire it here.</p>
+      <label className="f"><span>POS / ordering platform</span>
+        <select value={o.pos} onChange={e=>upd({pos:e.target.value})}>
+          <option value="toast">Toast</option>
+          <option value="spoton">SpotOn</option>
+          <option value="other">Other / direct link</option>
+        </select>
+      </label>
+      <Field label="Online ordering URL" value={o.orderUrl} onChange={v=>upd({orderUrl:v})} type="url" placeholder={hint} />
+      <p className="sub" style={{marginTop:-6}}>{hint}</p>
+      <Field label="Delivery URL (optional)" value={o.deliveryUrl} onChange={v=>upd({deliveryUrl:v})} type="url" placeholder="DoorDash / Uber Eats storefront link" />
+      <Field label="Catering contact email (optional)" value={o.cateringEmail} onChange={v=>upd({cateringEmail:v})} type="email" placeholder="catering@restaurant.com" />
+    </div>
+  );
+}
+
+/* ---------------- Step 6: Generate ---------------- */
+function StepGenerate({state, set}){
+  const [busy, setBusy] = useState(false);
+  const [phase, setPhase] = useState("");
+  const [err, setErr] = useState("");
+  const [chars, setChars] = useState(0);
+  const [revision, setRevision] = useState("");
+  const html = state.generatedHtml;
+
+  async function generate(){
+    if(!state.info.name.trim()){ setErr("Add the restaurant name (step 2) before generating."); return; }
+    setBusy(true); setErr(""); setPhase("Building the site…"); setChars(0);
+    try{
+      const text = await callClaude({
+        max_tokens: 24000,
+        messages: [{ role:"user", content: buildSitePrompt(state) }]
+      }, t => setChars(t.length));
+      set(s => ({...s, generatedHtml: stripFences(text)}));
+      setPhase("Done. Preview below.");
+    }catch(e){ setErr(e.message); setPhase(""); }
+    setBusy(false);
+  }
+  async function revise(){
+    if(!revision.trim()){ setErr("Describe the change first."); return; }
+    setBusy(true); setErr(""); setPhase("Applying your changes…"); setChars(0);
+    try{
+      const text = await callClaude({
+        max_tokens: 24000,
+        messages: [{ role:"user", content: revisePrompt(html, revision.trim()) }]
+      }, t => setChars(t.length));
+      set(s => ({...s, generatedHtml: stripFences(text)}));
+      setPhase("Changes applied."); setRevision("");
+    }catch(e){ setErr(e.message); setPhase(""); }
+    setBusy(false);
+  }
+  function download(){
+    const blob = new Blob([html], {type:"text/html"});
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = (state.info.name||"restaurant").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"") + ".html";
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 5000);
+  }
+  function openTab(){
+    const blob = new Blob([html], {type:"text/html"});
+    window.open(URL.createObjectURL(blob), "_blank");
+  }
+
+  return (
+    <div className="panel">
+      <h2>Generate</h2>
+      <p className="sub">Everything you entered + the design spec → one complete, crawlable HTML site with menu, locations, order-direct CTAs, and local-SEO markup baked in.</p>
+      <div className="previewbar">
+        <button className="btn" disabled={busy} onClick={generate}>{busy?"Working…":(html?"Regenerate from scratch":"Generate website")}</button>
+        {html && !busy && <button className="ghost" onClick={download}>Download HTML</button>}
+        {html && !busy && <button className="ghost" onClick={openTab}>Open full size</button>}
+        {busy && <span className="charcount" style={{alignSelf:"center"}}>{chars.toLocaleString()} chars…</span>}
+      </div>
+      <Status kind="err">{err}</Status>
+      <Status kind="info">{busy?phase:""}</Status>
+      <Status kind="ok">{!busy?phase:""}</Status>
+
+      {html && (
+        <div>
+          <iframe className="preview" title="Site preview" sandbox="allow-scripts allow-popups" srcDoc={html}></iframe>
+          <h3>Request changes</h3>
+          <label className="f">
+            <textarea rows="3" value={revision} placeholder='e.g. "Make the hero darker, move catering above the menu, and add a note that we close early on Sundays."' onChange={e=>setRevision(e.target.value)} />
+          </label>
+          <button className="ghost" disabled={busy} onClick={revise}>{busy?"Working…":"Apply changes"}</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ---------------- App ---------------- */
+function App(){
+  const [state, setState] = useState(loadState);
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){ /* storage full — generated HTML can exceed quota; keep going */ }
+  }, [state]);
+
+  function reset(){
+    if(!window.confirm("Start over? This clears everything entered, including the generated site.")) return;
+    localStorage.removeItem(STORE_KEY);
+    setState(DEFAULT_STATE);
+    setStep(0);
+  }
+
+  const stepDone = idx => {
+    if(idx===0) return !!state.design.designMd;
+    if(idx===1) return !!state.info.name;
+    if(idx===2) return state.locations.some(l=>l.address);
+    if(idx===3) return state.categories.some(c=>c.items.some(i=>i.name));
+    if(idx===4) return !!state.ordering.orderUrl;
+    if(idx===5) return !!state.generatedHtml;
+    return false;
+  };
+
+  const Steps = [StepDesign, StepInfo, StepLocations, StepMenu, StepOrdering, StepGenerate];
+  const Cur = Steps[step];
+
+  return (
+    <div className="wrap">
+      <header className="app">
+        <h1>Design<span className="forge">forge</span></h1>
+        <span className="by">by Postforge</span>
+        <button className="reset" onClick={reset}>start over</button>
+      </header>
+
+      <nav className="rail" aria-label="Steps">
+        {STEPS.map((s, i) => (
+          <button key={s} className={"st" + (i===step?" active":"") + (stepDone(i)?" done":"")} onClick={()=>setStep(i)}>
+            <span className="num">{stepDone(i) ? "●" : String(i+1).padStart(2,"0")}</span>
+            <span className="lbl">{s}</span>
+          </button>
+        ))}
+      </nav>
+
+      <Cur state={state} set={setState} />
+
+      <div className="nav">
+        <button className="ghost" disabled={step===0} onClick={()=>setStep(step-1)}>← Back</button>
+        {step < STEPS.length-1
+          ? <button className="btn" onClick={()=>setStep(step+1)}>Next →</button>
+          : <span />}
+      </div>
+
+      <footer className="app">DESIGNFORGE · BUILT BY POSTFORGE · AUTOSAVED LOCALLY</footer>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

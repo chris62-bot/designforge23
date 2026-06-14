@@ -1,0 +1,28 @@
+functionsDirectory = "C:\\Users\\chris\\OneDrive\\Desktop\\app\\New folder\\netlify\\functions"
+functionsDirectoryOrigin = "config-v1"
+plugins = []
+headers = []
+redirects = []
+
+[build]
+publish = "C:\\Users\\chris\\OneDrive\\Desktop\\app\\New folder"
+publishOrigin = "config"
+functions = "C:\\Users\\chris\\OneDrive\\Desktop\\app\\New folder\\netlify\\functions"
+
+[build.environment]
+
+[build.processing]
+
+[build.processing.css]
+
+[build.processing.html]
+
+[build.processing.images]
+
+[build.processing.js]
+
+[build.services]
+
+[functions]
+
+[functions."*"]
