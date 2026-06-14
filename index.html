@@ -424,11 +424,10 @@ function StepInfo({state, set}){
     if(!siteUrl.trim()){ setMsg({kind:"err", text:"Enter a website URL first."}); return; }
     setBusy(true); setMsg({kind:"info", text:"Pulling data from site — this takes 20–30 seconds…"});
     try{
-      const res = await callAPI({
+      const raw = await callClaude({
         messages:[{ role:"user", content: siteParsePrompt(siteUrl) }],
         tools:[{type:"web_search_20250305", name:"web_search"}]
       });
-      const raw = res.content.filter(b=>b.type==="text").map(b=>b.text).join("").trim();
       const clean = raw.replace(/```json|```/g,"").trim();
       const parsed = JSON.parse(clean);
 
@@ -507,7 +506,7 @@ function StepInfo({state, set}){
         <p className="sub" style={{marginBottom:8}}>Paste your restaurant URL — Designforge will extract the name, locations, hours, full menu, and ordering links automatically.</p>
         <div style={{display:"flex",gap:8,marginBottom:8}}>
           <input type="url" value={siteUrl} onChange={e=>setSiteUrl(e.target.value)} placeholder="https://whatsintheboxlunches.com" style={{flex:1}} />
-          <button className="btn" disabled={busy} onClick={importFromSite} style={{whiteSpace:"nowrap"}}>{busy?"Pulling…":"Pull from site"}</button>
+          <button className="btn" disabled={busy||!siteUrl.trim()} onClick={e=>{e.preventDefault();e.stopPropagation();importFromSite();}} style={{whiteSpace:"nowrap"}}>{busy?"Pulling…":"Pull from site"}</button>
         </div>
       </div>
 
@@ -815,4 +814,5 @@ function App(){
 ReactDOM.createRoot(document.getElementById("root")).render(<App />);
 </script>
 </body>
+</html>
 </html>
