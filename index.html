@@ -270,6 +270,9 @@ function buildSitePrompt(state){
   "9. schema.org JSON-LD: a Restaurant block per location with name, address, telephone, openingHoursSpecification, servesCuisine.\n" +
   "10. Mobile-first responsive, semantic HTML, all CSS in one <style> block, minimal or no JS, fast and crawlable. Meta title + description filled in.\n";
 }
+function menuParsePrompt(url){
+  return "Search the web for the menu at " + url + ". You MUST return ONLY a raw JSON object — no prose, no markdown, no preamble. Start with { end with }. Exactly this shape:\n{\"categories\":[{\"name\":\"\",\"description\":\"\",\"items\":[{\"name\":\"\",\"price\":\"\",\"description\":\"\"}]}]}\n\nRules: include every category and item you find. Keep item descriptions under 12 words. Use \"\" for missing prices or descriptions. Return only the JSON object, nothing else.";
+}
 function revisePrompt(html, instruction){
   return "Here is a restaurant website (single-file HTML):\n\n" + html + "\n\nApply this change request from the owner:\n\"" + instruction + "\"\n\nOutput the COMPLETE revised HTML document starting with <!DOCTYPE html>. Keep everything else intact. No explanations, no markdown fences.";
 }
@@ -602,6 +605,10 @@ function StepLocations({state, set}){
 
 /* ---------------- Step 4: Menu ---------------- */
 function StepMenu({state, set}){
+  const [menuUrl, setMenuUrl] = React.useState(state.design.sourceUrl||"");
+  const [busy, setBusy] = React.useState(false);
+  const [msg, setMsg] = React.useState({kind:"", text:""});
+
   const updCat = (id, patch) => set(s => ({...s, categories: s.categories.map(c => c.id===id ? {...c, ...patch} : c)}));
   const addCat = () => set(s => ({...s, categories: s.categories.concat([emptyCategory()])}));
   const delCat = id => set(s => ({...s, categories: s.categories.length>1 ? s.categories.filter(c=>c.id!==id) : s.categories}));
@@ -622,10 +629,41 @@ function StepMenu({state, set}){
     return {...c, items:arr};
   })}));
 
+  async function importMenu(){
+    if(!menuUrl.trim()){ setMsg({kind:"err", text:"Enter the restaurant website URL first."}); return; }
+    setBusy(true); setMsg({kind:"info", text:"Searching for menu — this takes 20–30 seconds…"});
+    try{
+      const raw = await callClaude({
+        max_tokens: 4000,
+        messages:[{ role:"user", content: menuParsePrompt(menuUrl) }],
+        tools:[{type:"web_search_20250305", name:"web_search"}]
+      });
+      const parsed = extractJson(raw);
+      if(!parsed.categories || !parsed.categories.length) throw new Error("No menu categories found for that URL.");
+      const cats = parsed.categories.filter(c=>c.name).map(c=>({
+        id: uid(), name: c.name||"", description: c.description||"",
+        items: (c.items||[]).filter(i=>i.name).map(i=>({ id:uid(), name:i.name||"", price:i.price||"", description:i.description||"" }))
+      }));
+      if(!cats.length) throw new Error("No menu items found. Try a different URL or enter manually.");
+      set(s => ({...s, categories: cats}));
+      setMsg({kind:"ok", text:"Imported " + cats.length + " categories. Edit or reorder below."});
+    }catch(e){ setMsg({kind:"err", text:e.message}); }
+    setBusy(false);
+  }
+
   return (
     <div className="panel">
       <h2>Menu</h2>
       <p className="sub">Embedded right in the page — no PDF. Categories in the order you set here.</p>
+      <div className="import" style={{marginBottom:14}}>
+        <h3 style={{color:"var(--accent)"}}>Import menu from website</h3>
+        <p className="sub" style={{marginBottom:8}}>Paste the restaurant URL and Designforge will extract the full menu automatically.</p>
+        <div style={{display:"flex",gap:8,marginBottom:8}}>
+          <input type="url" value={menuUrl} onChange={e=>setMenuUrl(e.target.value)} placeholder="https://restaurant.com" style={{flex:1}} />
+          <button className="btn" disabled={busy||!menuUrl.trim()} onClick={e=>{e.preventDefault();e.stopPropagation();importMenu();}} style={{whiteSpace:"nowrap"}}>{busy?"Importing…":"Import menu"}</button>
+        </div>
+        {msg.text && <div className={"msg "+msg.kind}>{msg.text}</div>}
+      </div>
       {state.categories.map((c, ci) => (
         <div className="card" key={c.id}>
           <div className="cardhead">
