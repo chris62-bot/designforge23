@@ -228,7 +228,7 @@ function designFromNotesPrompt(notes){
   return "A restaurant owner described the look they want:\n\n\"" + notes + "\"\n\nTurn this into a DESIGN.md — a complete design system specification with sections: ## Palette (named hex values), ## Typography (Google Fonts families, weights, scale), ## Layout, ## Components, ## Voice & mood. Make tasteful, specific choices that fit a restaurant. Output ONLY the markdown document, no preamble.";
 }
 function siteParsePrompt(url){
-  return "Search the web for the restaurant website at " + url + " and extract ALL available data.\n\nReturn ONLY valid JSON, no prose, no markdown, exactly this shape:\n{\"name\":\"\",\"concept\":\"\",\"tagline\":\"\",\"phone\":\"\",\"email\":\"\",\"description\":\"\",\"orderUrl\":\"\",\"deliveryUrl\":\"\",\"cateringEmail\":\"\",\"locations\":[{\"label\":\"\",\"address\":\"\",\"city\":\"\",\"state\":\"\",\"zip\":\"\",\"phone\":\"\",\"hours\":{\"Mon\":{\"open\":\"11:00\",\"close\":\"21:00\",\"closed\":false},\"Tue\":{\"open\":\"11:00\",\"close\":\"21:00\",\"closed\":false},\"Wed\":{\"open\":\"11:00\",\"close\":\"21:00\",\"closed\":false},\"Thu\":{\"open\":\"11:00\",\"close\":\"21:00\",\"closed\":false},\"Fri\":{\"open\":\"11:00\",\"close\":\"21:00\",\"closed\":false},\"Sat\":{\"open\":\"11:00\",\"close\":\"21:00\",\"closed\":true},\"Sun\":{\"open\":\"11:00\",\"close\":\"21:00\",\"closed\":true}}}],\"categories\":[{\"name\":\"\",\"description\":\"\",\"items\":[{\"name\":\"\",\"price\":\"\",\"description\":\"\"}]}]}\n\nExtract every menu item you can find with name, price, and description. Get all locations with addresses and hours. Find ordering and delivery URLs. Use empty string for anything not found.";
+  return "Search the web for the restaurant website at " + url + " and extract ALL available data. You MUST return ONLY a raw JSON object — no prose, no explanation, no markdown, no preamble. Your entire response must start with { and end with }. Exactly this shape:\n{\"name\":\"\",\"concept\":\"\",\"tagline\":\"\",\"phone\":\"\",\"email\":\"\",\"description\":\"\",\"orderUrl\":\"\",\"deliveryUrl\":\"\",\"cateringEmail\":\"\",\"locations\":[{\"label\":\"\",\"address\":\"\",\"city\":\"\",\"state\":\"\",\"zip\":\"\",\"phone\":\"\",\"hours\":{\"Mon\":{\"open\":\"11:00\",\"close\":\"21:00\",\"closed\":false},\"Tue\":{\"open\":\"11:00\",\"close\":\"21:00\",\"closed\":false},\"Wed\":{\"open\":\"11:00\",\"close\":\"21:00\",\"closed\":false},\"Thu\":{\"open\":\"11:00\",\"close\":\"21:00\",\"closed\":false},\"Fri\":{\"open\":\"11:00\",\"close\":\"21:00\",\"closed\":false},\"Sat\":{\"open\":\"11:00\",\"close\":\"21:00\",\"closed\":true},\"Sun\":{\"open\":\"11:00\",\"close\":\"21:00\",\"closed\":true}}}],\"categories\":[{\"name\":\"\",\"description\":\"\",\"items\":[{\"name\":\"\",\"price\":\"\",\"description\":\"\"}]}]}\n\nExtract every menu item you can find with name, price, and description. Get all locations with addresses and hours. Find ordering and delivery URLs. Use empty string for anything not found.";
 }
 
 function presenceParsePrompt(report){
@@ -429,8 +429,7 @@ function StepInfo({state, set}){
         messages:[{ role:"user", content: siteParsePrompt(siteUrl) }],
         tools:[{type:"web_search_20250305", name:"web_search"}]
       });
-      const clean = raw.replace(/```json|```/g,"").trim();
-      const parsed = JSON.parse(clean);
+      const parsed = extractJson(raw);
 
       set(s => {
         let next = {...s};
