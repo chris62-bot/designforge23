@@ -631,12 +631,30 @@ function StepMenu({state, set}){
 
   async function importMenu(){
     if(!menuUrl.trim()){ setMsg({kind:"err", text:"Enter the restaurant website URL first."}); return; }
-    setBusy(true); setMsg({kind:"info", text:"Searching for menu — this takes 20–30 seconds…"});
+    setBusy(true); setMsg({kind:"info", text:"Fetching menu — this takes 15–20 seconds…"});
     try{
-      const raw = await callClaude({
-        max_tokens: 4000,
-        messages:[{ role:"user", content: menuParsePrompt(menuUrl) }]
+      const res = await fetch("/api/menu", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({url: menuUrl})
       });
+      if(!res.ok){ const e = await res.json().catch(()=>({error:"Server error"})); throw new Error(e.error||"Server error"); }
+      const reader = res.body.getReader();
+      const dec = new TextDecoder();
+      let buf = "", raw = "";
+      while(true){
+        const {done, value} = await reader.read();
+        if(done) break;
+        buf += dec.decode(value, {stream:true});
+        const lines = buf.split("\n"); buf = lines.pop();
+        for(const line of lines){
+          if(!line.startsWith("data:")) continue;
+          const d = line.slice(5).trim(); if(!d) continue;
+          let ev; try{ ev = JSON.parse(d); }catch(e){ continue; }
+          if(ev.type==="content_block_delta" && ev.delta?.type==="text_delta") raw += ev.delta.text;
+          if(ev.type==="error") throw new Error(ev.error?.message||"Stream error");
+        }
+      }
       const parsed = extractJson(raw);
       if(!parsed.categories || !parsed.categories.length) throw new Error("No menu categories found for that URL.");
       const cats = parsed.categories.filter(c=>c.name).map(c=>({
